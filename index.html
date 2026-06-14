@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>搶救阿德！訂購單</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-3">
+
+<div class="max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-5" id="app">
+    <h1 class="text-2xl font-bold text-center text-red-600 mb-4">搶救阿德！訂購單 115.6</h1>
+    
+    <div class="mb-4">
+        <input type="text" id="customerName" class="w-full p-4 border-2 border-gray-200 rounded-xl" placeholder="請輸入姓名">
+    </div>
+
+    <div id="productList" class="space-y-2 mb-6 h-[350px] overflow-y-auto border-2 border-gray-100 p-2 rounded-xl bg-gray-50">
+        <!-- 商品清單 -->
+    </div>
+
+    <button onclick="calculateOrder()" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition">確認訂單並生成明細</button>
+
+    <div id="resultArea" class="hidden mt-6 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
+        <h2 class="font-bold text-blue-800 mb-2">訂單明細 (請長按下方內容全選複製)：</h2>
+        <!-- 增加 contenteditable 屬性讓 iOS 更容易選取 -->
+        <div id="orderText" contenteditable="true" class="w-full h-32 p-4 text-sm text-gray-700 bg-white border-2 border-blue-300 rounded-xl mb-4 overflow-y-auto"></div>
+        
+        <p class="text-xs text-gray-500 mb-4 text-center">※ 如無法自動複製，請直接長按上方文字框進行「全選」再「複製」</p>
+        
+        <button onclick="copyCurrentText()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition">
+            一鍵複製訂單，前往 LINE 貼上
+        </button>
+    </div>
+</div>
+
+<script>
+const products = [
+    {name: "鮭魚片", price: 160}, {name: "鱈魚片", price: 180}, {name: "藥膳醉蝦", price: 450}, {name: "多利魚", price: 220},
+    {name: "煙燻/烤/鹹水雞", price: 480}, {name: "帶頭大花枝", price: 240}, {name: "美國安格斯牛五花肉片", price: 190},
+    {name: "牛肉片", price: 180}, {name: "豬肉片", price: 140}, {name: "三杯舌喉", price: 250}, {name: "大熟白蝦", price: 480},
+    {name: "重組干貝", price: 250}, {name: "生凍草蝦", price: 250}, {name: "滷豬腱肉", price: 200}, {name: "大鮑魚", price: 260},
+    {name: "花枝丸", price: 180}, {name: "去骨醉雞腿", price: 240}, {name: "松阪肉", price: 500}, {name: "原味香腸", price: 190},
+    {name: "黑胡椒毛豆", price: 130}, {name: "去皮雞胸肉", price: 120}, {name: "去骨大雞腿", price: 150}, {name: "煙燻雞腿", price: 150},
+    {name: "肉多多牛肉爐", price: 280}, {name: "無泡藥大蝦仁", price: 430}, {name: "毛豆藜麥", price: 100}, {name: "虱目魚皮", price: 50},
+    {name: "月亮蝦餅", price: 400}, {name: "水餃(高麗菜)", price: 200}, {name: "水餃(韭菜)", price: 200},
+    {name: "台灣鯖魚片", price: 25}, {name: "挪威鯖魚片", price: 70}, {name: "軟殼蟹", price: 50}, {name: "軟殼蟹(盒)", price: 380},
+    {name: "魷魚冰卷", price: 100}
+];
+
+const container = document.getElementById('productList');
+products.forEach(p => {
+    container.innerHTML += `
+        <div class="flex items-center justify-between border-b pb-2 product-item">
+            <label class="flex items-center text-sm font-medium"><input type="checkbox" class="chk mr-3 w-5 h-5 accent-red-600" data-name="${p.name}" data-price="${p.price}"> ${p.name} ($${p.price})</label>
+            <input type="number" value="1" min="1" class="qty w-16 border-2 rounded-lg text-center p-2">
+        </div>
+    `;
+});
+
+function calculateOrder() {
+    const name = document.getElementById('customerName').value;
+    if (!name) { alert("請輸入姓名！"); return; }
+    
+    let msg = `【搶救阿德訂單】\n訂購人：${name}\n------------------\n`;
+    let total = 0;
+    let hasItem = false;
+
+    document.querySelectorAll('.product-item').forEach(item => {
+        const chk = item.querySelector('.chk');
+        if (chk.checked) {
+            hasItem = true;
+            const qty = item.querySelector('.qty').value;
+            const sub = qty * parseInt(chk.dataset.price);
+            total += sub;
+            msg += `${chk.dataset.name} x ${qty} = $${sub}\n`;
+        }
+    });
+
+    if (!hasItem) { alert("請至少選一個商品！"); return; }
+    
+    msg += `------------------\n總金額：$${total}\n請阿德確認！`;
+    
+    document.getElementById('orderText').innerText = msg;
+    document.getElementById('resultArea').classList.remove('hidden');
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+function copyCurrentText() {
+    const el = document.getElementById('orderText');
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    try {
+        document.execCommand('copy');
+        alert("訂單已複製！\n\n現在請前往 LINE 貼上給阿德。");
+    } catch (e) {
+        alert("請長按文字框選擇「全選」再「複製」");
+    }
+}
+</script>
+</body>
+</html>
