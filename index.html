@@ -3,60 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>搶救阿德！訂購單</title>
+    <title>搶救阿德 - 嚴選冷凍美食</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .product-card:has(input:checked) { border-color: #ef4444; background-color: #fef2f2; }
+    </style>
 </head>
-<body class="bg-gray-50 p-3">
+<body class="bg-gray-50 pb-24">
 
-<div class="max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-5" id="app">
-    <h1 class="text-2xl font-bold text-center text-red-600 mb-4">搶救阿德！訂購單 115.6</h1>
-    
-    <div class="mb-4">
-        <input type="text" id="customerName" class="w-full p-4 border-2 border-gray-200 rounded-xl" placeholder="請輸入姓名">
+<!-- Header -->
+<div class="bg-red-600 text-white p-6 shadow-lg">
+    <h1 class="text-3xl font-black tracking-tight">搶救阿德！</h1>
+    <p class="text-red-100 mt-1">賤售現有庫存，品質保證，歡迎團購！</p>
+</div>
+
+<div class="max-w-xl mx-auto p-4">
+    <!-- 姓名輸入 -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm mb-6 border border-gray-100">
+        <label class="block text-sm font-bold text-gray-700 mb-2">請輸入訂購人姓名：</label>
+        <input type="text" id="customerName" class="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-500" placeholder="例如：王小明">
     </div>
 
-    <div id="productList" class="space-y-2 mb-6 h-[350px] overflow-y-auto border-2 border-gray-100 p-2 rounded-xl bg-gray-50">
-        <!-- 商品清單 -->
+    <!-- 商品列表 -->
+    <div id="productContainer" class="space-y-6"></div>
+</div>
+
+<!-- 懸浮確認按鈕區 -->
+<div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+    <div class="max-w-xl mx-auto flex gap-4 items-center">
+        <button onclick="calculateOrder()" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-red-700 transition">確認訂單總額</button>
     </div>
+</div>
 
-    <button onclick="calculateOrder()" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition">確認訂單並生成明細</button>
-
-    <div id="resultArea" class="hidden mt-6 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
-        <h2 class="font-bold text-blue-800 mb-2">訂單明細 (請長按下方內容全選複製)：</h2>
-        <!-- 增加 contenteditable 屬性讓 iOS 更容易選取 -->
-        <div id="orderText" contenteditable="true" class="w-full h-32 p-4 text-sm text-gray-700 bg-white border-2 border-blue-300 rounded-xl mb-4 overflow-y-auto"></div>
-        
-        <p class="text-xs text-gray-500 mb-4 text-center">※ 如無法自動複製，請直接長按上方文字框進行「全選」再「複製」</p>
-        
-        <button onclick="copyCurrentText()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition">
-            一鍵複製訂單，前往 LINE 貼上
-        </button>
+<!-- 結果 Modal -->
+<div id="resultModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto">
+        <h2 class="text-xl font-bold mb-4 text-center">購物明細</h2>
+        <textarea id="orderText" readonly class="w-full h-40 p-3 bg-gray-50 rounded-xl border border-gray-200 text-sm mb-4"></textarea>
+        <div class="flex gap-2">
+            <button onclick="closeModal()" class="flex-1 py-3 border rounded-xl font-bold">返回修改</button>
+            <button onclick="copyAndOpenLine()" class="flex-2 bg-green-600 text-white py-3 px-6 rounded-xl font-bold">複製並前往 LINE</button>
+        </div>
     </div>
 </div>
 
 <script>
-const products = [
-    {name: "鮭魚片", price: 160}, {name: "鱈魚片", price: 180}, {name: "藥膳醉蝦", price: 450}, {name: "多利魚", price: 220},
-    {name: "煙燻/烤/鹹水雞", price: 480}, {name: "帶頭大花枝", price: 240}, {name: "美國安格斯牛五花肉片", price: 190},
-    {name: "牛肉片", price: 180}, {name: "豬肉片", price: 140}, {name: "三杯舌喉", price: 250}, {name: "大熟白蝦", price: 480},
-    {name: "重組干貝", price: 250}, {name: "生凍草蝦", price: 250}, {name: "滷豬腱肉", price: 200}, {name: "大鮑魚", price: 260},
-    {name: "花枝丸", price: 180}, {name: "去骨醉雞腿", price: 240}, {name: "松阪肉", price: 500}, {name: "原味香腸", price: 190},
-    {name: "黑胡椒毛豆", price: 130}, {name: "去皮雞胸肉", price: 120}, {name: "去骨大雞腿", price: 150}, {name: "煙燻雞腿", price: 150},
-    {name: "肉多多牛肉爐", price: 280}, {name: "無泡藥大蝦仁", price: 430}, {name: "毛豆藜麥", price: 100}, {name: "虱目魚皮", price: 50},
-    {name: "月亮蝦餅", price: 400}, {name: "水餃(高麗菜)", price: 200}, {name: "水餃(韭菜)", price: 200},
-    {name: "台灣鯖魚片", price: 25}, {name: "挪威鯖魚片", price: 70}, {name: "軟殼蟹", price: 50}, {name: "軟殼蟹(盒)", price: 380},
-    {name: "魷魚冰卷", price: 100}
+const data = [
+    { cat: "肉品", items: [
+        {name: "煙燻/烤/鹹水雞", price: 480}, {name: "美國安格斯牛五花", price: 190},
+        {name: "牛肉片", price: 180}, {name: "豬肉片", price: 140}, {name: "松阪肉", price: 500},
+        {name: "去皮雞胸肉", price: 120}, {name: "去骨大雞腿", price: 150}, {name: "煙燻雞腿", price: 150},
+        {name: "去骨醉雞腿", price: 240}, {name: "滷豬腱肉", price: 200}
+    ]},
+    { cat: "海鮮", items: [
+        {name: "鮭魚片", price: 160}, {name: "鱈魚片", price: 180}, {name: "多利魚", price: 220},
+        {name: "帶頭大花枝", price: 240}, {name: "藥膳醉蝦", price: 450}, {name: "大熟白蝦", price: 480},
+        {name: "生凍草蝦", price: 250}, {name: "無泡藥大蝦仁", price: 430}, {name: "大鮑魚", price: 260},
+        {name: "虱目魚皮", price: 50}, {name: "台灣鯖魚片", price: 25}, {name: "挪威鯖魚片", price: 70},
+        {name: "軟殼蟹", price: 50}, {name: "軟殼蟹(盒)", price: 380}, {name: "魷魚冰卷", price: 100}
+    ]},
+    { cat: "精選美食", items: [
+        {name: "水餃(高麗菜)", price: 200}, {name: "水餃(韭菜)", price: 200},
+        {name: "月亮蝦餅", price: 400}, {name: "三杯舌喉", price: 250},
+        {name: "肉多多牛肉爐", price: 280}, {name: "原味香腸", price: 190}
+    ]},
+    { cat: "丸類與其他", items: [
+        {name: "重組干貝", price: 250}, {name: "花枝丸", price: 180},
+        {name: "黑胡椒毛豆", price: 130}, {name: "毛豆藜麥", price: 100}
+    ]}
 ];
 
-const container = document.getElementById('productList');
-products.forEach(p => {
-    container.innerHTML += `
-        <div class="flex items-center justify-between border-b pb-2 product-item">
-            <label class="flex items-center text-sm font-medium"><input type="checkbox" class="chk mr-3 w-5 h-5 accent-red-600" data-name="${p.name}" data-price="${p.price}"> ${p.name} ($${p.price})</label>
-            <input type="number" value="1" min="1" class="qty w-16 border-2 rounded-lg text-center p-2">
-        </div>
-    `;
+const container = document.getElementById('productContainer');
+data.forEach(group => {
+    container.innerHTML += `<h3 class="font-bold text-gray-500 uppercase text-xs tracking-widest mt-6 mb-2">${group.cat}</h3>`;
+    group.items.forEach(p => {
+        container.innerHTML += `
+            <div class="product-card bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between transition-all">
+                <label class="flex items-center flex-1 cursor-pointer">
+                    <input type="checkbox" class="chk w-5 h-5 accent-red-600 mr-4" data-name="${p.name}" data-price="${p.price}">
+                    <span class="font-medium text-gray-800">${p.name} <span class="text-red-500 font-bold ml-2">$${p.price}</span></span>
+                </label>
+                <input type="number" value="1" min="1" class="qty w-16 p-2 bg-gray-50 border rounded-lg text-center">
+            </div>
+        `;
+    });
 });
 
 function calculateOrder() {
@@ -67,7 +97,7 @@ function calculateOrder() {
     let total = 0;
     let hasItem = false;
 
-    document.querySelectorAll('.product-item').forEach(item => {
+    document.querySelectorAll('.product-card').forEach(item => {
         const chk = item.querySelector('.chk');
         if (chk.checked) {
             hasItem = true;
@@ -79,28 +109,20 @@ function calculateOrder() {
     });
 
     if (!hasItem) { alert("請至少選一個商品！"); return; }
-    
     msg += `------------------\n總金額：$${total}\n請阿德確認！`;
     
-    document.getElementById('orderText').innerText = msg;
-    document.getElementById('resultArea').classList.remove('hidden');
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    document.getElementById('orderText').value = msg;
+    document.getElementById('resultModal').classList.remove('hidden');
 }
 
-function copyCurrentText() {
+function closeModal() { document.getElementById('resultModal').classList.add('hidden'); }
+
+function copyAndOpenLine() {
     const el = document.getElementById('orderText');
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    
-    try {
-        document.execCommand('copy');
-        alert("訂單已複製！\n\n現在請前往 LINE 貼上給阿德。");
-    } catch (e) {
-        alert("請長按文字框選擇「全選」再「複製」");
-    }
+    el.select();
+    document.execCommand('copy');
+    alert("訂單已複製！前往 LINE 貼上即可。");
+    window.location.href = "line://";
 }
 </script>
 </body>
