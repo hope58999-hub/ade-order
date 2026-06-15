@@ -7,109 +7,123 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .product-card:has(input:checked) { border-color: #ef4444; background-color: #fef2f2; }
+        .shake { animation: shake 0.2s ease-in-out 0s 2; }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } 100% { transform: translateX(0); } }
     </style>
 </head>
 <body class="bg-gray-50 pb-24">
 
-<!-- Header -->
-<div class="bg-red-600 text-white p-4 shadow-lg">
-    <p class="text-red-100 text-sm mt-1">搶救阿德，現有庫存特價，歡迎團購！</p>
+<div class="bg-red-600 text-white p-4 shadow-lg text-center">
+    <h1 class="font-bold text-lg">搶救阿德 - 嚴選冷凍美食</h1>
 </div>
 
 <div class="max-w-xl mx-auto p-3">
-    <!-- 姓名輸入 -->
-    <div class="bg-white rounded-xl p-3 shadow-sm mb-4 border border-gray-100">
-        <label class="block text-xs font-bold text-gray-700 mb-1">訂購人姓名：</label>
-        <input type="text" id="customerName" class="w-full p-2 bg-gray-50 rounded-lg focus:ring-2 focus:ring-red-500 text-sm" placeholder="例如：王小明">
+    <div id="nameWrapper" class="bg-white rounded-xl p-3 shadow-sm mb-4 border-2 border-transparent transition-all">
+        <label class="block text-xs font-bold text-gray-700 mb-1">訂購人姓名 (必填)：</label>
+        <input type="text" id="customerName" class="w-full p-2 bg-gray-50 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 text-sm" placeholder="請務必輸入姓名">
     </div>
 
-    <!-- 商品列表 -->
-    <div id="productContainer" class="space-y-2"></div>
+    <div id="productSections" class="space-y-6"></div>
 </div>
 
-<!-- 懸浮確認按鈕 -->
-<div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40">
     <div class="max-w-xl mx-auto">
         <button onclick="calculateOrder()" class="w-full bg-red-600 text-white py-3 rounded-lg font-bold shadow-lg hover:bg-red-700 transition">確認訂單總額</button>
     </div>
 </div>
 
-<!-- 結果 Modal -->
-<div id="resultModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl w-full max-w-lg p-5">
-        <h2 class="text-lg font-bold mb-3 text-center">購物明細</h2>
-        <textarea id="orderText" readonly class="w-full h-40 p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs mb-4"></textarea>
-        <div class="flex gap-2">
-            <button onclick="closeModal()" class="flex-1 py-2.5 border rounded-lg font-bold text-sm">返回</button>
-            <button onclick="copyAndOpenLine()" class="flex-2 bg-green-600 text-white py-2.5 px-6 rounded-lg font-bold text-sm">複製並前往 LINE</button>
+<!-- 加高後的明細視窗 -->
+<div id="resultModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-2 z-50">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-4">
+        <h2 class="text-xl font-bold mb-2 text-center">購物明細</h2>
+        <p class="text-center text-sm text-gray-500 mb-2">請確認內容，複製後請貼上至 LINE 群組</p>
+        <textarea id="orderText" readonly class="w-full h-[500px] p-4 bg-gray-50 rounded-xl border-2 border-red-200 text-lg font-medium leading-relaxed mb-4"></textarea>
+        <div class="flex gap-3">
+            <button onclick="closeModal()" class="flex-1 py-3 border border-gray-300 rounded-lg font-bold text-base">返回修改</button>
+            <button onclick="copyAndOpenLine()" class="flex-[2] bg-green-600 text-white py-3 rounded-lg font-bold text-base shadow-lg">複製並貼至 LINE 群組</button>
         </div>
     </div>
 </div>
 
 <script>
 const data = [
-    { cat: "肉品", items: [
-        {name: "煙燻/烤/鹹水雞", price: 480}, {name: "美國安格斯牛五花", price: 190},
-        {name: "牛肉片", price: 180}, {name: "豬肉片", price: 140}, {name: "松阪肉", price: 500},
-        {name: "去皮雞胸肉", price: 120}, {name: "去骨大雞腿", price: 150}, {name: "煙燻雞腿", price: 150},
-        {name: "去骨醉雞腿", price: 240}, {name: "滷豬腱肉", price: 200}
+    { cat: "肉類", items: [
+        {name: "煙燻雞", spec: "隻", price: 480}, {name: "烤雞", spec: "隻", price: 480},
+        {name: "鹹水雞", spec: "隻", price: 480}, {name: "安格斯牛五花", spec: "500克", price: 190},
+        {name: "牛肉片", spec: "600克", price: 180}, {name: "豬肉片", spec: "600克", price: 140},
+        {name: "松阪肉", spec: "6片", price: 500}, {name: "去皮雞胸肉", spec: "片", price: 120},
+        {name: "去骨大雞腿", spec: "隻", price: 150}, {name: "煙燻雞腿", spec: "包", price: 150},
+        {name: "去骨醉雞腿", spec: "支", price: 240}, {name: "滷豬腱肉", spec: "粒", price: 200},
+        {name: "原味香腸", spec: "包", price: 190}, {name: "三杯舌喉", spec: "包", price: 250}
     ]},
     { cat: "海鮮", items: [
-        {name: "鮭魚片", price: 160}, {name: "鱈魚片", price: 180}, {name: "多利魚", price: 220},
-        {name: "帶頭大花枝", price: 240}, {name: "藥膳醉蝦", price: 450}, {name: "大熟白蝦", price: 480},
-        {name: "生凍草蝦", price: 250}, {name: "無泡藥大蝦仁", price: 430}, {name: "大鮑魚", price: 260},
-        {name: "虱目魚皮", price: 50}, {name: "台灣鯖魚片", price: 25}, {name: "挪威鯖魚片", price: 70},
-        {name: "軟殼蟹", price: 50}, {name: "軟殼蟹(盒)", price: 380}, {name: "魷魚冰卷", price: 100}
+        {name: "鮭魚片", spec: "片", price: 160}, {name: "鱈魚片", spec: "片", price: 180},
+        {name: "藥膳醉蝦", spec: "盒", price: 450}, {name: "多利魚", spec: "公斤", price: 220},
+        {name: "帶頭大花枝", spec: "隻", price: 240}, {name: "大熟白蝦", spec: "盒", price: 480},
+        {name: "生凍草蝦", spec: "盒/12尾", price: 250}, {name: "無泡藥大蝦仁", spec: "公斤", price: 430},
+        {name: "大鮑魚", spec: "10粒", price: 260}, {name: "虱目魚皮", spec: "200克", price: 50},
+        {name: "台灣鯖魚片", spec: "片", price: 25}, {name: "挪威鯖魚片", spec: "片", price: 70},
+        {name: "軟殼蟹", spec: "隻", price: 50}, {name: "軟殼蟹(盒)", spec: "8隻", price: 380},
+        {name: "魷魚冰卷", spec: "隻", price: 100}
     ]},
-    { cat: "精選美食", items: [
-        {name: "水餃(高麗菜)", price: 200}, {name: "水餃(韭菜)", price: 200},
-        {name: "月亮蝦餅", price: 400}, {name: "三杯舌喉", price: 250},
-        {name: "肉多多牛肉爐", price: 280}, {name: "原味香腸", price: 190}
-    ]},
-    { cat: "丸類與其他", items: [
-        {name: "重組干貝", price: 250}, {name: "花枝丸", price: 180},
-        {name: "黑胡椒毛豆", price: 130}, {name: "毛豆藜麥", price: 100}
+    { cat: "其他美食", items: [
+        {name: "高麗菜水餃", spec: "50粒", price: 200}, {name: "韭菜水餃", spec: "50粒", price: 200},
+        {name: "月亮蝦餅", spec: "5片/包", price: 400}, {name: "肉多多牛肉爐", spec: "包", price: 280},
+        {name: "重組干貝", spec: "包/35顆", price: 250}, {name: "花枝丸", spec: "600克", price: 180},
+        {name: "黑胡椒毛豆", spec: "1000克", price: 130}, {name: "毛豆藜麥", spec: "250克", price: 100}
     ]}
 ];
 
-const container = document.getElementById('productContainer');
+const container = document.getElementById('productSections');
 data.forEach(group => {
-    container.innerHTML += `<h3 class="font-bold text-gray-400 uppercase text-[10px] tracking-widest mt-4 mb-1 px-1">${group.cat}</h3>`;
+    let sectionHtml = `<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-red-600 font-bold mb-3 border-b pb-1">${group.cat}</h3>
+                        <div class="space-y-2">`;
     group.items.forEach(p => {
-        container.innerHTML += `
-            <div class="product-card bg-white p-2.5 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
-                <label class="flex items-center flex-1 cursor-pointer">
-                    <input type="checkbox" class="chk w-4 h-4 accent-red-600 mr-3" data-name="${p.name}" data-price="${p.price}">
-                    <span class="text-sm text-gray-800 font-medium">${p.name} <span class="text-red-500 font-bold ml-1">$${p.price}</span></span>
+        sectionHtml += `
+            <div class="product-card p-2 rounded-lg border border-gray-100 flex items-center justify-between">
+                <label class="flex items-center flex-1 cursor-pointer overflow-hidden max-w-[65%]">
+                    <input type="checkbox" class="chk w-4 h-4 accent-red-600 flex-shrink-0 mr-2" data-name="${p.name}" data-price="${p.price}" data-spec="${p.spec}">
+                    <span class="text-xs text-gray-700 truncate">
+                        <span class="font-bold text-sm">${p.name}</span> 
+                        <span class="text-gray-400">(${p.spec})</span>
+                    </span>
                 </label>
-                <input type="number" value="1" min="1" class="qty w-12 p-1 bg-gray-50 border rounded text-center text-sm">
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <span class="text-red-600 font-bold text-sm whitespace-nowrap">$${p.price}</span>
+                    <input type="number" value="1" min="1" class="qty w-10 p-1 bg-gray-50 border rounded text-center text-xs">
+                </div>
             </div>
         `;
     });
+    sectionHtml += `</div></div>`;
+    container.innerHTML += sectionHtml;
 });
 
 function calculateOrder() {
-    const name = document.getElementById('customerName').value;
-    if (!name) { alert("請輸入姓名！"); return; }
-    
-    let msg = `【搶救阿德訂單】\n訂購人：${name}\n------------------\n`;
-    let total = 0;
-    let hasItem = false;
-
+    const nameInput = document.getElementById('customerName');
+    const nameWrapper = document.getElementById('nameWrapper');
+    if (!nameInput.value.trim()) {
+        nameWrapper.classList.add('border-red-500', 'shake');
+        setTimeout(() => nameWrapper.classList.remove('shake'), 500);
+        alert("⚠️ 請輸入訂購人姓名！");
+        nameInput.focus();
+        return;
+    }
+    nameWrapper.classList.remove('border-red-500');
+    let msg = `【搶救阿德訂單】\n訂購人：${nameInput.value}\n------------------\n`;
+    let total = 0, hasItem = false;
     document.querySelectorAll('.product-card').forEach(item => {
         const chk = item.querySelector('.chk');
         if (chk.checked) {
             hasItem = true;
             const qty = item.querySelector('.qty').value;
-            const sub = qty * parseInt(chk.dataset.price);
-            total += sub;
-            msg += `${chk.dataset.name} x ${qty} = $${sub}\n`;
+            total += (qty * parseInt(chk.dataset.price));
+            msg += `${chk.dataset.name} (${chk.dataset.spec}) x ${qty} = $${qty * parseInt(chk.dataset.price)}\n`;
         }
     });
-
     if (!hasItem) { alert("請至少選一個商品！"); return; }
     msg += `------------------\n總金額：$${total}\n請阿德確認！`;
-    
     document.getElementById('orderText').value = msg;
     document.getElementById('resultModal').classList.remove('hidden');
 }
@@ -117,10 +131,9 @@ function calculateOrder() {
 function closeModal() { document.getElementById('resultModal').classList.add('hidden'); }
 
 function copyAndOpenLine() {
-    const el = document.getElementById('orderText');
-    el.select();
+    document.getElementById('orderText').select();
     document.execCommand('copy');
-    alert("訂單已複製！前往 LINE 貼上即可。");
+    alert("訂單已複製！請打開 LINE 貼上即可。");
     window.location.href = "line://";
 }
 </script>
