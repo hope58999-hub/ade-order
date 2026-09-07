@@ -167,46 +167,4 @@ function copyAndOpenLine() {
 }
 </script>
 </body>
-</html>function calculateOrder() {
-    const nameInput = document.getElementById('customerName');
-    const nameWrapper = document.getElementById('nameWrapper');
-    if (!nameInput.value.trim()) {
-        nameWrapper.classList.add('border-red-500', 'shake');
-        setTimeout(() => nameWrapper.classList.remove('shake'), 500);
-        alert("⚠️ 請輸入訂購人姓名！");
-        nameInput.focus();
-        return;
-    }
-    
-    const now = new Date().toLocaleString('zh-TW', { hour12: false });
-    nameWrapper.classList.remove('border-red-500');
-    
-    let msg = `【搶救阿德訂單】\n\n訂購人：${nameInput.value}\n------------------\n`;
-    let total = 0, hasItem = false;
-    document.querySelectorAll('.product-card').forEach(item => {
-        const chk = item.querySelector('.chk');
-        if (chk.checked) {
-            hasItem = true;
-            const qty = item.querySelector('.qty').value;
-            total += (qty * parseInt(chk.dataset.price));
-            msg += `${chk.dataset.name} (${chk.dataset.spec}) x ${qty} = $${qty * parseInt(chk.dataset.price)}\n`;
-        }
-    });
-    if (!hasItem) { alert("請至少選一個商品！"); return; }
-    
-    msg += `------------------\n總金額：$${total}\n下單時間：${now}\n\n請阿德確認！`;
-    document.getElementById('orderText').value = msg;
-    document.getElementById('resultModal').classList.remove('hidden');
-}
-
-function closeModal() { document.getElementById('resultModal').classList.add('hidden'); }
-
-function copyAndOpenLine() {
-    document.getElementById('orderText').select();
-    document.execCommand('copy');
-    alert("訂單已複製！請打開 LINE 貼上即可。");
-    window.location.href = "line://";
-}
-</script>
-</body>
 </html>
