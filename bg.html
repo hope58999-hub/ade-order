@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日金言美句</title>
+    <title>每日音樂家故事</title>
     <style>
         /* 基礎樣式與唯美漸層背景 */
         body {
             margin: 0;
-            padding: 0;
+            padding: 2rem 0; /* 增加上下內距避免小螢幕溢出 */
             box-sizing: border-box;
             font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
             background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
-            height: 100vh;
+            min-height: 100vh; /* 改為 min-height 確保內容過長時可捲動 */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -37,9 +37,9 @@
             transform: translateY(-5px);
         }
 
-        /* 金句內文 */
+        /* 故事內文 */
         .quote-text {
-            font-size: 1.6rem;
+            font-size: 1.3rem; /* 稍微縮小字體以容納較長的故事 */
             color: #2c3e50;
             line-height: 1.6;
             margin-bottom: 1.5rem;
@@ -47,7 +47,7 @@
             word-wrap: break-word;
         }
 
-        /* 作者/出處 */
+        /* 音樂家/出處 */
         .quote-author {
             font-size: 1.1rem;
             color: #57606f;
@@ -79,45 +79,56 @@
             transform: scale(0.95);
         }
     </style>
-
 </head>
 <body>
 
     <div class="quote-container">
-        <!-- 金句顯示區域 -->
+        <!-- 故事顯示區域 -->
         <div class="quote-text" id="quote-box">載入中...</div>
         <div class="quote-author" id="author-box"></div>
         
         <!-- 按鈕 -->
-        <button class="btn-next" onclick="getRandomQuote()">下一句</button>
+        <button class="btn-next" onclick="getRandomQuote()">下一個故事</button>
     </div>
+
     <script>
-        // 1. 在這裡準備您的金言美句資料庫（可自行自由增刪）
+        // 1. 音樂家的故事資料庫（共 20 位）
         const quotesData = [
-            { text: "當你真心渴望某樣東西時，整個宇宙都會聯合起來幫助你完成。", author: "—— 《牧羊少年奇幻之旅》" },
-            { text: "生活不是等待暴風雨過去，而是學會在雨中跳舞。", author: "—— 薇薇安·格林" },
-            { text: "生命中最難的階段不是沒有人懂你，而是你不懂你自己。", author: "—— 尼采" },
-            { text: "成功並非終點，失敗也非末日，重要的是繼續前行的勇氣。", author: "—— 溫斯頓·邱吉爾" },
-            { text: "種一棵樹最好的時間是十年前，其次是現在。", author: "—— 諺語" },
-            { text: "願你出走半生，歸來仍是少年。", author: "—— 蘇軾（意境延伸）" },
-            { text: "不要因為走得太遠，以至於忘了自己為什麼出發。", author: "—— 紀伯倫" }
+            { text: "貝多芬在逐漸失去聽力的情況下，依然創作出了震撼人心的《第九交響曲》。他將木棍一端咬在牙齒間，另一端抵在鋼琴上，藉由骨頭傳導來「聽」聲音，展現了對音樂無比的熱愛與不屈的毅力。", author: "—— 樂聖 貝多芬 (Ludwig van Beethoven)" },
+            { text: "莫札特被譽為音樂神童，年僅五歲便開始作曲，六歲就在歐洲各地巡迴演奏。他一生創作了無數經典，曾說：「我把我的樂曲獻給上帝，如果我的作品有什麼缺點，那是因為我的靈魂還不夠純潔。」", author: "—— 音樂神童 莫札特 (Wolfgang Amadeus Mozart)" },
+            { text: "年輕的巴哈為了聆聽管風琴大師布克斯特胡德的演奏，向教會請假，結果徒步走了近五十公里。他原本只打算待幾天，卻因為太著迷，最後在那裡逗留了四個月才回去。", author: "—— 音樂之父 巴哈 (Johann Sebastian Bach)" },
+            { text: "蕭邦在離開祖國波蘭前往巴黎時，帶走了一只裝滿波蘭泥土的銀杯。他終生未能重返故鄉，去世後，他的姊姊將這杯故鄉的泥土灑在了他巴黎的墓地上，讓他永遠與祖國相伴。", author: "—— 鋼琴詩人 蕭邦 (Frédéric Chopin)" },
+            { text: "帕格尼尼在一場音樂會上演奏時，小提琴的琴弦突然斷了一根。他若無其事地繼續用剩下的琴弦演奏，甚至接連斷了兩根弦後，依然用僅存的一根G弦完美演繹了全曲，震驚全場。", author: "—— 小提琴魔鬼 帕格尼尼 (Niccolò Paganini)" },
+            { text: "柴可夫斯基在擔任客席指揮時，總是用左手緊緊托住自己的下巴。因為他有一種奇特的心理錯覺，深怕一放手，自己的頭顱就會在指揮時掉下來。", author: "—— 旋律大師 柴可夫斯基 (Pyotr Ilyich Tchaikovsky)" },
+            { text: "舒伯特一生貧困，常常在餐館裡用餐時，靈感一來就在菜單的背面寫下樂譜。他創作了超過六百首藝術歌曲，被譽為「歌曲之王」，卻在31歲時英年早逝。", author: "—— 歌曲之王 舒伯特 (Franz Schubert)" },
+            { text: "韋瓦第在威尼斯的「慈悲孤女院」擔任音樂教師長達三十年。他為這些孤女創作了大量協奏曲，並訓練她們成為當時歐洲最頂尖的女子樂團，吸引了無數貴族慕名而來。", author: "—— 協奏曲之父 韋瓦第 (Antonio Vivaldi)" },
+            { text: "海頓在創作《第94號交響曲》時，為了叫醒在音樂會上打瞌睡的貴族觀眾，特別在第二樂章極輕柔的演奏後，安排了一個突如其來的全樂團強音齊奏，因此這首曲子被稱為《驚愕交響曲》。", author: "—— 交響樂之父 海頓 (Joseph Haydn)" },
+            { text: "韓德爾在創作不朽名作《彌賽亞》時，彷彿進入了忘我的狂熱狀態。他把自己關在房間裡，廢寢忘食，僅花了短短24天就完成了這部宏大的神劇，寫作時甚至常感動得淚流滿面。", author: "—— 神劇之父 韓德爾 (George Frideric Handel)" },
+            { text: "德布西在參觀爪哇的甘美朗樂團演出後深受啟發，將東方音樂的五聲音階與模糊的節奏融入創作中，打破了傳統西方和聲的框架，開創了印象派音樂的先河。", author: "—— 印象派大師 德布西 (Claude Debussy)" },
+            { text: "史特拉汶斯基的芭蕾舞劇《春之祭》在巴黎首演時，因其粗暴不和諧的音效與前衛的舞蹈，引發了觀眾的激烈抗議與騷動，甚至發生肢體衝突，成為音樂史上最著名的「首演暴動」事件。", author: "—— 現代音樂巨匠 史特拉汶斯基 (Igor Stravinsky)" },
+            { text: "李斯特是史上第一位舉辦「獨奏會」（Recital）的音樂家。他憑藉著出神入化的琴技與迷人的風采，讓當時的聽眾為之瘋狂，甚至會搶奪他的手帕或手套作為紀念，引發了著名的「李斯特狂熱」。", author: "—— 鋼琴之王 李斯特 (Franz Liszt)" },
+            { text: "布拉姆斯對貝多芬極為崇敬，深怕自己的作品無法超越前人，因此直到43歲才出版他的《第一號交響曲》。這部作品耗時二十餘年打磨，被後人譽為「貝多芬的第十交響曲」。", author: "—— 古典主義堅守者 布拉姆斯 (Johannes Brahms)" },
+            { text: "克拉拉·舒曼不僅是當時最傑出的鋼琴演奏家，也是極具才華的作曲家。在丈夫羅伯特·舒曼精神衰弱後，她獨力撫養八個孩子，並透過巡迴演出與教學維持生計，大力推廣丈夫與布拉姆斯的作品。", author: "—— 鋼琴才女 克拉拉·舒曼 (Clara Schumann)" },
+            { text: "孟德爾頌在20歲時，偶然發現了被世人遺忘的巴哈《馬太受難曲》手稿。他極力籌備並親自指揮了這部曠世巨作的重新首演，成功讓巴哈的偉大音樂在沉寂近百年後重現世人面前。", author: "—— 浪漫派才子 孟德爾頌 (Felix Mendelssohn)" },
+            { text: "拉赫曼尼諾夫擁有一雙令人驚嘆的超大手，他的手指能在鋼琴上輕鬆跨越十二度音程。這讓他能夠彈奏出極其寬廣且和聲豐富的和弦，成為他作品與演奏風格的一大標誌。", author: "—— 鋼琴巨匠 拉赫曼尼諾夫 (Sergei Rachmaninoff)" },
+            { text: "馬勒曾說：「我是三重無家可歸者：在奧地利人中是波希米亞人，在德國人中是奧地利人，在全世界眼中是猶太人。」他將這種漂泊與孤獨感深深注入他的交響曲中，充滿了對生命與死亡的深刻探討。", author: "—— 晚期浪漫派巨匠 馬勒 (Gustav Mahler)" },
+            { text: "蕭士塔高維契在蘇聯高壓統治下，將許多對極權的諷刺、悲憤與暗號隱藏在看似符合官方要求的音樂中。他的《第五號交響曲》表面上是「蘇維埃藝術家對公正批評的實際答覆」，實則充滿了深沉的哀歌。", author: "—— 時代的見證者 蕭士塔高維契 (Dmitri Shostakovich)" },
+            { text: "馬友友四歲時開始學習小提琴和鋼琴，但都興趣缺缺。他想要一種「很大」的樂器，父親便帶他去大提琴家面前，騙他說大提琴是一匹大馬。從此他被大提琴的低沉音色迷住，成為享譽國際的大提琴家。", author: "—— 大提琴大師 馬友友 (Yo-Yo Ma)" }
         ];
 
-        // 2. 隨機撈取金句的 JavaScript 邏輯
+        // 2. 隨機撈取故事的 JavaScript 邏輯
         function getRandomQuote() {
             // 隨機產生陣列索引
             const randomIndex = Math.floor(Math.random() * quotesData.length);
             const selectedQuote = quotesData[randomIndex];
             
-            // 將內容寫入網頁
+            // 將內容寫入網頁 (修正了原始碼中的 typo)
             document.getElementById("quote-box").innerText = selectedQuote.text;
-            document.getElementById("author-box").innerText = selectedQuote.selectedQuote ?? selectedQuote.author;
+            document.getElementById("author-box").innerText = selectedQuote.author;
         }
 
         // 3. 網頁一打開（每次進入）就執行一次
-            
         window.onload = getRandomQuote;
     </script>
-    
 </body>
 </html>
